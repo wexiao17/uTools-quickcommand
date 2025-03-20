@@ -90,9 +90,6 @@ export default {
         },
       },
       lastWheelTime: 0,
-      initialTabBarWidth: null, // 存储初始标签栏宽度
-      lastCommandCardStyle: null, // 记录上一次的卡片样式
-      maxTabBarWidth: null, // 存储最大标签栏宽度
     };
   },
   props: {
@@ -109,13 +106,6 @@ export default {
     // 确保组件尺寸正确
     this.adjustContainerSize();
     window.addEventListener('resize', this.adjustContainerSize);
-    
-    // 存储初始标签栏宽度
-    this.initialTabBarWidth = this.tabBarWidth;
-    this.maxTabBarWidth = this.tabBarWidth;
-    
-    // 初始化时检查当前视图类型
-    this.lastCommandCardStyle = this.$root.profile.commandCardStyle;
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.adjustContainerSize);
@@ -242,22 +232,9 @@ export default {
       const container = this.$el;
       if (!container) return;
       
-      // 设置正确的高度
+      // 设置正确的高度和宽度
       container.style.height = `calc(100% - ${this.footerBarHeight})`;
-      
-      // 使用固定宽度或初始宽度，确保分类缩进时界面不变小
-      if (this.$root.profile.commandCardStyle === 'mini' && 
-          this.initialTabBarWidth && 
-          this.tabBarWidth !== this.initialTabBarWidth) {
-        // 如果标签栏宽度变小了（缩进），使用初始宽度计算
-        container.style.width = `calc(100% - ${this.initialTabBarWidth})`;
-        // 调整左侧位置，确保右侧对齐
-        container.style.left = this.initialTabBarWidth;
-      } else {
-        // 正常情况下使用当前标签栏宽度
-        container.style.width = `calc(100% - ${this.tabBarWidth})`;
-        container.style.left = this.tabBarWidth;
-      }
+      container.style.width = `calc(100% - ${this.tabBarWidth})`;
     },
     // 新的滚轮处理方法
     handleScrollWheel(event) {
@@ -318,41 +295,6 @@ export default {
       });
     },
   },
-  watch: {
-    // 监听标签栏宽度变化
-    tabBarWidth: {
-      handler(newWidth) {
-        // 记录最大宽度
-        if (!this.maxTabBarWidth || parseFloat(newWidth) > parseFloat(this.maxTabBarWidth)) {
-          this.maxTabBarWidth = newWidth;
-        }
-        
-        // 当标签栏宽度变化时重新调整容器尺寸
-        this.$nextTick(() => {
-          this.adjustContainerSize();
-        });
-      },
-      immediate: true
-    },
-    // 监听卡片样式变化
-    '$root.profile.commandCardStyle': {
-      handler(newStyle) {
-        // 如果切换到五列视图(mini)，使用最大宽度作为基准
-        if (newStyle === 'mini') {
-          // 使用记录的最大宽度
-          this.initialTabBarWidth = this.maxTabBarWidth || this.tabBarWidth;
-        }
-        
-        this.lastCommandCardStyle = newStyle;
-        
-        // 立即调整容器尺寸
-        this.$nextTick(() => {
-          this.adjustContainerSize();
-        });
-      },
-      immediate: true
-    }
-  },
   emits: ["command-changed"],
 };
 </script>
@@ -364,7 +306,8 @@ export default {
   right: 0;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  /* 移除内联样式绑定，改为在方法中动态设置 */
+  width: calc(100% - v-bind(tabBarWidth));
+  height: calc(100% - v-bind(footerBarHeight));
 }
 
 .current-tag-indicator {
