@@ -1,9 +1,10 @@
 <template>
   <div
     class="command-panel-container absolute-right"
+    :class="{ 'full-width-panel': $root.profile.commandCardStyle === 'mini' }"
     :style="{
       bottom: footerBarHeight,
-      left: tabBarWidth,
+      left: $root.profile.commandCardStyle === 'mini' ? '0' : tabBarWidth,
     }"
   >
     <div class="current-tag-indicator q-pa-xs">
@@ -196,6 +197,13 @@ export default {
           return sortCommands(
             commands.filter((cmd) => cmd.tags?.includes(this.currentTag))
           );
+        case "刚关命令":
+          // 处理刚关闭的命令分类
+          return sortCommands(
+            commands.filter((cmd) => 
+              this.commandManager.state.recentlyDisabledCommands.includes(cmd.features.code)
+            )
+          );
       }
     },
   },
@@ -232,9 +240,19 @@ export default {
       const container = this.$el;
       if (!container) return;
       
-      // 设置正确的高度和宽度
+      // 设置正确的高度
       container.style.height = `calc(100% - ${this.footerBarHeight})`;
-      container.style.width = `calc(100% - ${this.tabBarWidth})`;
+      
+      // 针对五列视图的特殊处理
+      if (this.$root.profile.commandCardStyle === 'mini') {
+        // 五列视图占满整个界面宽度
+        container.style.width = '100%';
+        container.style.left = '0';
+      } else {
+        // 其他视图正常显示
+        container.style.width = `calc(100% - ${this.tabBarWidth})`;
+        container.style.left = this.tabBarWidth;
+      }
     },
     // 新的滚轮处理方法
     handleScrollWheel(event) {
@@ -306,10 +324,20 @@ export default {
   right: 0;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  width: calc(100% - v-bind(tabBarWidth));
-  height: calc(100% - v-bind(footerBarHeight));
 }
 
+.full-width-panel {
+  z-index: 10; /* 确保五列视图在最上层 */
+  width: 100% !important;
+  left: 0 !important;
+}
+
+/* 调整五列视图下的卡片样式 */
+.full-width-panel .command-item {
+  padding: 4px 8px;
+}
+
+/* 其他样式保持不变 */
 .current-tag-indicator {
   position: absolute;
   top: 10px;
