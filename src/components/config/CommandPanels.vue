@@ -10,7 +10,6 @@
     <div class="current-tag-indicator q-pa-xs">
       {{ currentTag }}
     </div>
-
     <q-scroll-area
       ref="scrollArea"
       class="full-height full-width"
@@ -238,6 +237,17 @@ export default {
                 cmd.features.code,
               ),
             ),
+          );
+        default:
+          return sortCommands(
+            commands.filter((cmd) => cmd.tags?.includes(this.currentTag))
+          );
+        case "刚关命令":
+          // 处理刚关闭的命令分类
+          return sortCommands(
+            commands.filter((cmd) => 
+              this.commandManager.state.recentlyDisabledCommands.includes(cmd.features.code)
+            )
           );
       }
     },
