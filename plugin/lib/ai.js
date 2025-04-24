@@ -93,6 +93,25 @@ const API_ENDPOINTS = {
 
 // 构建API URL
 function buildApiUrl(baseUrl, endpoint) {
+  // 以#结尾时，直接使用用户输入的地址（去掉#）
+  if (baseUrl.endsWith('#')) {
+    return baseUrl.slice(0, -1);
+  }
+  
+  // 以/结尾且是 OpenAI 的 v1 接口时，忽略 v1 前缀
+  if (baseUrl.endsWith('/') && endpoint.startsWith('/v1/')) {
+    return baseUrl + endpoint.substring(4);
+  }
+  
+  // 其他情况保持原有逻辑
+  if (!baseUrl.endsWith(endpoint)) {
+    return baseUrl.replace(/\/?$/, endpoint);
+  }
+  return baseUrl;
+}
+
+// 构建API URL
+function buildApiUrl(baseUrl, endpoint) {
   if (!baseUrl.endsWith(endpoint)) {
     return baseUrl.replace(/\/?$/, endpoint);
   }
