@@ -21,6 +21,7 @@ const state = reactive({
   currentTag: "",
   commandSearchKeyword: "",
   currentCommand: {},
+  recentlyDisabledCommands: [], // 新增：存储最近禁用的命令
 });
 
 const getCmdType = (cmds) => {
@@ -81,6 +82,9 @@ export function useCommandManager() {
     );
     state.activatedQuickCommandFeatureCodes = currentFts.map((f) => f.code);
     state.activatedQuickPanels = quickpanels;
+    
+    // 重置最近禁用的命令列表，确保用户重新进入程序时刷新"刚关命令"分类
+    state.recentlyDisabledCommands = [];
   };
   // 清除所有命令
   const clearAllFeatures = () => {
@@ -104,7 +108,7 @@ export function useCommandManager() {
   const getAllQuickCommandTags = () => {
     state.allQuickCommandTags = window.lodashM
       .union(...Object.values(state.allQuickCommands).map((x) => x.tags))
-      .concat(["未分类"])
+      .concat(["未分类", "刚关命令"]) // 添加"刚关命令"分类
       .filter((x) => x);
   };
 
@@ -170,6 +174,11 @@ export function useCommandManager() {
       window.lodashM.cloneDeep(state.allQuickCommands[code].features)
     );
     state.activatedQuickCommandFeatureCodes.push(code);
+    
+    // 从最近禁用的命令列表中移除
+    state.recentlyDisabledCommands = state.recentlyDisabledCommands.filter(
+      (x) => x !== code
+    );
   };
 
   // 禁用命令
@@ -177,6 +186,11 @@ export function useCommandManager() {
     utoolsFull.removeFeature(code);
     state.activatedQuickCommandFeatureCodes =
       state.activatedQuickCommandFeatureCodes.filter((x) => x !== code);
+    
+    // 添加到最近禁用的命令列表中
+    if (!state.recentlyDisabledCommands.includes(code)) {
+      state.recentlyDisabledCommands.push(code);
+    }
   };
 
   // 导入命令
@@ -286,6 +300,7 @@ export function useCommandManager() {
     clearAllFeatures();
     getAllQuickCommands();
     state.currentTag = "默认";
+    state.recentlyDisabledCommands = []; // 清空最近禁用的命令列表
   };
 
   // 修改并定位当前标签事件
